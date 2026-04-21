@@ -1,0 +1,101 @@
+﻿@page "/borrow"
+@rendermode InteractiveServer
+@using SubmitLabServer.Models
+@using SubmitLabServer.Services
+@inject ILibraryService LibraryService
+
+<h3>Borrow/return books</h3>
+
+
+<div class="card mb-4 p-3">
+    <h5>Borrow a Book</h5>
+    <div class="mb-2">
+        <label>Select User</label>
+        <select class="form-select" @bind="selectedUserId">
+            <option value="0">-- Select a User --</option>
+            @foreach (var user in LibraryService.GetUsers())
+            {
+                <option value="@user.Id">@user.Name</option>
+            }
+        </select>
+    </div>
+    <div class="mb-2">
+        <label>Select Book</label>
+        <select class="form-select" @bind="selectedBookId">
+            <option value="0">-- Select a Book --</option>
+            @foreach (var book in LibraryService.GetBooks())
+            {
+                <option value="@book.Id">@book.Title by @book.Author</option>
+            }
+        </select>
+    </div>
+    <button class="btn btn-primary" @onclick="BorrowBook">Borrow Book</button>
+    @if (!string.IsNullOrEmpty(borrowMessage))
+    {
+        <div class="alert alert-success mt-2">@borrowMessage</div>
+    }
+</div>
+
+   
+<div class="card p-3">
+    <h5>Currently Borrowed Books</h5>
+    @if (!LibraryService.GetBorrowedBooks().Any())
+    {
+        //borrwed books
+        <p>No books are currently borrowed.</p>
+    }
+    else
+    {
+        // change later @li class d-flex 
+        @foreach (var entry in LibraryService.GetBorrowedBooks())
+        {
+            <div class="mb-3">
+                <strong>@entry.Key.Name</strong> (@entry.Key.Email)
+                <ul class="mt-1">
+                    @for (int i = 0; i < entry.Value.Count; i++)
+                    {
+                        var index = i;
+                        var userId = entry.Key.Id;
+                        <li class="d-flex align-items-center gap-2 mb-1">
+                            @entry.Value[i].Title by @entry.Value[i].Author
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => ReturnBook(userId, index)">Return</button>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    }
+    @if (!string.IsNullOrEmpty(returnMessage))
+    {
+        <div class="alert alert-info mt-2">@returnMessage</div>
+    }
+</div>
+
+@code {
+    private int selectedUserId = 0;
+    private int selectedBookId = 0;
+    private string borrowMessage = string.Empty;
+    private string returnMessage = string.Empty;
+
+    private void BorrowBook()
+    {
+        if (selectedUserId == 0 || selectedBookId == 0)
+        {
+            borrowMessage = "Please select both a user and a book.";
+            return;
+        }
+
+        LibraryService.BorrowBook(selectedBookId, selectedUserId);
+        borrowMessage = "Book borrowed successfully!";
+        returnMessage = string.Empty;
+        selectedUserId = 0;
+        selectedBookId = 0;
+    }
+
+    private void ReturnBook(int userId, int bookIndex)
+    {
+        LibraryService.ReturnBook(userId, bookIndex);
+        returnMessage = "Book returned successfully!";
+        borrowMessage = string.Empty;
+    }
+}

@@ -1,0 +1,109 @@
+﻿@page "/users"
+@using SubmitLabServer.Models
+@using SubmitLabServer.Services
+@inject ILibraryService LibraryService
+
+<h3>Users</h3>
+
+<!-- ADD / EDIT FORM -->
+<div class="card mb-4 p-3">
+    <h5>@(editingUser == null ? "Add New User" : "Edit User")</h5>
+    <div class="mb-2">
+        <input class="form-control" placeholder="Name" @bind="formName" />
+    </div>
+    <div class="mb-2">
+        <input class="form-control" placeholder="Email" @bind="formEmail" />
+    </div>
+    <div>
+        <button class="btn btn-primary me-2" @onclick="SaveUser">
+            @(editingUser == null ? "Add User" : "Save Changes")
+        </button>
+        @if (editingUser != null)
+        {
+            <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+        }
+    </div>
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert alert-success mt-2">@message</div>
+    }
+</div>
+
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in LibraryService.GetUsers())
+        {
+            <tr>
+                <td>@user.Id</td>
+                <td>@user.Name</td>
+                <td>@user.Email</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-1" @onclick="() => StartEdit(user)">Edit</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(user.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private string formName = string.Empty;
+    private string formEmail = string.Empty;
+    private string message = string.Empty;
+    private User? editingUser = null;
+
+    private void SaveUser()
+    {
+        if (string.IsNullOrWhiteSpace(formName) || string.IsNullOrWhiteSpace(formEmail))
+        {
+            message = "Please fill in all fields.";
+            return;
+        }
+
+        if (editingUser == null)
+        {
+            LibraryService.AddUser(new User { Name = formName, Email = formEmail });
+            message = "User added successfully!";
+        }
+        else
+        {
+            LibraryService.EditUser(editingUser.Id, new User { Name = formName, Email = formEmail });
+            message = "User updated successfully!";
+            editingUser = null;
+        }
+
+        formName = string.Empty;
+        formEmail = string.Empty;
+    }
+
+    private void StartEdit(User user)
+    {
+        editingUser = user;
+        formName = user.Name;
+        formEmail = user.Email;
+        message = string.Empty;
+    }
+
+    private void CancelEdit()
+    {
+        editingUser = null;
+        formName = string.Empty;
+        formEmail = string.Empty;
+        message = string.Empty;
+    }
+
+    private void DeleteUser(int id)
+    {
+        LibraryService.DeleteUser(id);
+        message = "User deleted.";
+    }
+}
