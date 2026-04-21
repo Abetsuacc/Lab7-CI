@@ -35,7 +35,7 @@ public class LibraryServiceTests
     public void ReadBooks_ValidCsv()
     {
      
-        File.WriteAllLines("./Data/Boo.csv", new[]
+        File.WriteAllLines("./Data/Books.csv", new[]
         {
             "1,Dune,Frank Herbert,9780441172719"
         });
